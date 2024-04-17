@@ -1,3 +1,4 @@
+import json
 import os
 import random
 
@@ -94,6 +95,7 @@ class Browser:
             except Exception as e:
                 print(e)
                 assert not e
+
     def __get_item(self, page, element):
         actions = ActionChains(page.driver)
         page.driver.execute_script("arguments[0].scrollIntoView(true);", element)
@@ -103,15 +105,24 @@ class Browser:
         time.sleep(5)
         try:
             item = Item(page.driver)
-            print(item.url)
-            print(item.item_id)
-            print(item.name)
-            print(item.phone_number)
-            print(item.price)
-            print(item.description)
-            print(item.address)
-            print(item.images_url_list)
-            #response = requests.post("http://localhost:8000/add_item", json=item)
+            # print(item.url)
+            # print(item.item_id)
+            # print(item.name)
+            # print(item.phone_number)
+            # print(item.price)
+            # print(item.description)
+            # print(item.address)
+            #print(item.images_url_list)
+            new_dict = item.__dict__.copy()
+            del new_dict["driver"]
+            json_data = json.dumps(new_dict, ensure_ascii=False)
+            #json_data = json.dumps(new_dict, ensure_ascii=False).encode("utf-8")
+            print(json_data)
+            print(new_dict)
+            if is_json_valid(json_data):
+                #headers = {'Content-Type': 'application/json; charset=utf-8'}
+                response = requests.post("http://localhost:8000/add_item", json=new_dict)
+                print(response.status_code)
         except Exception as e:
             print(e)
         while len(page.driver.window_handles) > 1:
@@ -131,7 +142,7 @@ class Item:
         self.get_address()
         self.get_price()
         self.get_description()
-        self.get_images()
+        #self.get_images()
 
     def get_url(self):
         parsed_url = urlparse(self.driver.current_url)
@@ -179,11 +190,21 @@ def main():
     #url = "https://www.nhatot.com/thue-can-ho-chung-cu?f=p&page=1"
     url = "https://www.nhatot.com/thue-can-ho-chung-cu-thanh-pho-nha-trang-khanh-hoa?f=p&page=1"
     browser = Browser.get_browser_instance(url)
-    print(browser.get_data(url))
+    item_list = browser.get_data(url)
+    print(item_list)
 
     #element =
     keyboard.wait("|")
 
+
+def is_json_valid(json_item):
+    try:
+        json.loads(json_item)
+    except ValueError as e:
+        print(e)
+        return False
+    return True
+
+
 if __name__ == '__main__':
     main()
-
